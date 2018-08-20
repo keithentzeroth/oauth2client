@@ -29,8 +29,8 @@ import sys
 import tempfile
 
 import six
-from six.moves import http_client
-from six.moves import urllib
+import httplib
+import urllib
 
 import oauth2client
 from oauth2client import _helpers
@@ -713,7 +713,7 @@ class OAuth2Credentials(Credentials):
 
     def _generate_refresh_request_body(self):
         """Generate the body that will be used in the refresh request."""
-        body = urllib.parse.urlencode({
+        body = urllib.urlencode({
             'grant_type': 'refresh_token',
             'client_id': self.client_id,
             'client_secret': self.client_secret,
@@ -779,7 +779,7 @@ class OAuth2Credentials(Credentials):
             http, self.token_uri, method='POST',
             body=body, headers=headers)
         content = _helpers._from_bytes(content)
-        if resp.status == http_client.OK:
+        if resp.status == httplib.OK:
             d = json.loads(content)
             self.token_response = d
             self.access_token = d['access_token']
@@ -843,11 +843,11 @@ class OAuth2Credentials(Credentials):
         token_revoke_uri = _helpers.update_query_params(
             self.revoke_uri, query_params)
         resp, content = transport.request(http, token_revoke_uri)
-        if resp.status == http_client.METHOD_NOT_ALLOWED:
-            body = urllib.parse.urlencode(query_params)
+        if resp.status == httplib.METHOD_NOT_ALLOWED:
+            body = urllib.urlencode(query_params)
             resp, content = transport.request(http, token_revoke_uri,
                                               method='POST', body=body)
-        if resp.status == http_client.OK:
+        if resp.status == httplib.OK:
             self.invalid = True
         else:
             error_msg = 'Invalid response {0}.'.format(resp.status)
@@ -888,7 +888,7 @@ class OAuth2Credentials(Credentials):
             self.token_info_uri, query_params)
         resp, content = transport.request(http, token_info_uri)
         content = _helpers._from_bytes(content)
-        if resp.status == http_client.OK:
+        if resp.status == httplib.OK:
             d = json.loads(content)
             self.scopes = set(_helpers.string_to_scopes(d.get('scope', '')))
         else:
@@ -998,7 +998,7 @@ def _detect_gce_environment():
         response, _ = transport.request(
             http, _GCE_METADATA_URI, headers=_GCE_HEADERS)
         return (
-            response.status == http_client.OK and
+            response.status == httplib.OK and
             response.get(_METADATA_FLAVOR_HEADER) == _DESIRED_METADATA_FLAVOR)
     except socket.error:  # socket.timeout or socket.error(64, 'Host is down')
         logger.info('Timeout attempting to reach GCE metadata service.')
@@ -1483,7 +1483,7 @@ class AssertionCredentials(GoogleCredentials):
     def _generate_refresh_request_body(self):
         assertion = self._generate_assertion()
 
-        body = urllib.parse.urlencode({
+        body = urllib.urlencode({
             'assertion': assertion,
             'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
         })
@@ -1554,7 +1554,7 @@ def verify_id_token(id_token, audience, http=None,
         http = transport.get_cached_http()
 
     resp, content = transport.request(http, cert_uri)
-    if resp.status == http_client.OK:
+    if resp.status == httplib.OK:
         certs = json.loads(_helpers._from_bytes(content))
         return crypt.verify_signed_jwt_with_certs(id_token, certs, audience)
     else:
@@ -1951,7 +1951,7 @@ class OAuth2WebServerFlow(Flow):
         if self.device_uri is None:
             raise ValueError('The value of device_uri must not be None.')
 
-        body = urllib.parse.urlencode({
+        body = urllib.urlencode({
             'client_id': self.client_id,
             'scope': self.scope,
         })
@@ -1968,7 +1968,7 @@ class OAuth2WebServerFlow(Flow):
         resp, content = transport.request(
             http, self.device_uri, method='POST', body=body, headers=headers)
         content = _helpers._from_bytes(content)
-        if resp.status == http_client.OK:
+        if resp.status == httplib.OK:
             try:
                 flow_info = json.loads(content)
             except ValueError as exc:
@@ -2038,7 +2038,7 @@ class OAuth2WebServerFlow(Flow):
         else:
             post_data['grant_type'] = 'authorization_code'
             post_data['redirect_uri'] = self.redirect_uri
-        body = urllib.parse.urlencode(post_data)
+        body = urllib.urlencode(post_data)
         headers = {
             'content-type': 'application/x-www-form-urlencoded',
         }
@@ -2053,7 +2053,7 @@ class OAuth2WebServerFlow(Flow):
         resp, content = transport.request(
             http, self.token_uri, method='POST', body=body, headers=headers)
         d = _parse_exchange_token_response(content)
-        if resp.status == http_client.OK and 'access_token' in d:
+        if resp.status == httplib.OK and 'access_token' in d:
             access_token = d['access_token']
             refresh_token = d.get('refresh_token', None)
             if not refresh_token:
