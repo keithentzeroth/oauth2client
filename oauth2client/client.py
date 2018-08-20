@@ -38,6 +38,7 @@ from oauth2client import _pkce
 from oauth2client import clientsecrets
 from oauth2client import transport
 
+ISKEITHVERSION = True
 
 HAS_OPENSSL = False
 HAS_CRYPTO = False
